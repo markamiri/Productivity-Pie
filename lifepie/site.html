@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://unpkg.com/chart.js-plugin-labels-dv/dist/chartjs-plugin-labels.min.js"></script>
+    <style>
+      /* Style to adjust the canvas container */
+
+      #chartContainer {
+        width: 650px; /* Increased container size */
+        height: 650px; /* Increased container size */
+        display: flex;
+        margin: 0 auto;
+        vertical-align: top; /* Align with the top of the buttons */
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* Style for the button container */
+      #buttonContainer {
+        display: inline-block;
+        vertical-align: top; /* Align with the top of the chart */
+        margin-left: 20px; /* Space between chart and buttons */
+        text-align: center;
+      }
+
+      /* Container for title and links */
+      #headerContainer {
+        display: flex; /* Flexbox layout */
+        justify-content: center; /* Center all items */
+        align-items: center; /* Align items vertically center */
+        margin-bottom: 20px; /* Space between header and content */
+        width: 100%; /* Full width */
+        padding: 0; /* Horizontal padding */
+        margin-top: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Style for the left and right links container */
+      #leftLinks,
+      #rightLinks {
+        position: absolute;
+        top: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      #leftLinks {
+        left: 0;
+      }
+
+      #rightLinks {
+        right: 0;
+      }
+
+      /* Hide the forms by default */
+      .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 1200px;
+        top: 0;
+        padding-top: 200px;
+        width: 400px; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0, 0, 0); /* Fallback color */
+        background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      @font-face {
+        font-family: "Utah Condensed Bold";
+        src: url("fonts/utah-condensed-bold.ttf") format("truetype");
+        font-weight: bold;
+        font-style: normal;
+      }
+
+      body {
+        margin: 0; /* Remove default margin */
+        min-height: 100vh; /* Full viewport height */
+        flex-direction: column; /* Stack items vertically */
+        align-items: center; /* Center horizontally */
+        justify-content: flex-start; /* Center vertically */
+        font-family: "Utah Condensed Bold", sans-serif; /* Apply the font */
+        overflow-x: hidden;
+      }
+
+      .title {
+        font-size: 24px;
+        font-family: "Utah Condensed Bold", sans-serif;
+        font-weight: bold;
+        font-style: normal;
+        letter-spacing: 0.75px;
+        margin: 0; /* Remove default margin */
+        text-align: center;
+        margin-top: 10px;
+      }
+
+      /* Style for text links */
+      .link {
+        font-family: "Utah Condensed Bold", sans-serif;
+        font-weight: bold;
+        letter-spacing: 0.75;
+        font-style: normal;
+        font-size: 18px;
+        color: #000; /* Black color for text links */
+        text-decoration: none; /* Remove underline by default */
+        margin: 0 10px; /* Space between links */
+        margin-top: 10px;
+      }
+
+      .link:hover {
+        text-decoration: underline; /* Underline on hover */
+      }
+
+      /* Style for new links */
+      .new-link {
+        font-family: "Utah Condensed Bold", sans-serif;
+        font-weight: bold;
+        letter-spacing: 0.75;
+        font-style: normal;
+        font-size: 18px;
+        color: #000; /* Black color for text links */
+        margin: 0 10px; /* Increased space between links */
+        text-decoration: none;
+        margin-top: 10px;
+      }
+
+      .new-link:hover {
+        text-decoration: underline; /* Ensure underline on hover */
+      }
+
+      /* Style for the task list */
+      #taskListContainer {
+        width: 100%;
+        max-width: 400px;
+        margin-left: 20px; /* Adjust this to control the distance from the left */
+        padding: 10px;
+        margin-top: 20px;
+        box-sizing: border-box;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: none;
+        left: 0; /* Ensure it stays on the left side */
+        display: inline-block;
+      }
+
+      /* Style for each task item */
+      .task-item {
+        display: flex;
+        align-items: left;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+
+      /* Style for the task name */
+      .task-name {
+        flex-grow: 1;
+        margin-left: 10px;
+      }
+
+      /* Style for the clickable circle */
+      .task-circle {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #000;
+        margin-right: 10px;
+        cursor: pointer;
+      }
+
+      /* Style for the checked circle */
+      .task-circle.checked {
+        background-color: #00ff00; /* Green checkmark */
+        border: none;
+      }
+
+      /* Style for the checkmark */
+      .task-circle.checked::after {
+        content: "✔";
+        display: block;
+        text-align: center;
+        line-height: 20px;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header container to align title and links -->
+    <div id="headerContainer">
+      <!-- New text links to the left of the title -->
+      <div id="leftLinks">
+        <a href="#" class="new-link">SIGN IN</a>
+        <a href="#" class="new-link">CALENDAR</a>
+        <a href="#" class="new-link">TO-DO-LIST</a>
+      </div>
+      <p class="title">PRODUCTIVITY PIE</p>
+      <div id="rightLinks">
+        <!-- Text links to open modals -->
+        <a href="#" id="openAddTaskModal" class="link">Add Task</a>
+        <a href="#" id="openEditTaskModal" class="link">Edit Task</a>
+        <a href="#" id="openRemoveTaskModal" class="link">Remove Task</a>
+      </div>
+    </div>
+    <div id="taskListContainer" style="display: none">
+      <ul id="taskList"></ul>
+    </div>
+
+    <!-- Container to align pie chart and buttons side by side -->
+    <div id="container">
+      <!-- Add a container to control the canvas size -->
+      <div id="chartContainer">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+
+    <!-- The Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeAddTaskModal">&times;</span>
+        <p>Task name:</p>
+        <input type="text" id="taskName" />
+        <p>Duration (Hours):</p>
+        <input type="text" id="hour" />
+        <p>Duration (Minutes):</p>
+        <input type="text" id="minutes" />
+        <button id="addTask">Add Task</button>
+      </div>
+    </div>
+
+    <!-- The Edit Task Modal -->
+    <div id="editTaskModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeEditTaskModal">&times;</span>
+        <p>Task name:</p>
+        <select id="edittaskName"></select>
+        <p>Duration (Hours):</p>
+        <input type="text" id="editHour" />
+        <p>Duration (Minutes):</p>
+        <input type="text" id="editMinutes" />
+        <button id="editTask">Edit Task</button>
+      </div>
+    </div>
+
+    <!-- The Remove Task Modal -->
+    <div id="removeTaskModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeRemoveTaskModal">&times;</span>
+        <p>Task name:</p>
+        <select id="removetaskName"></select>
+        <button id="removeTask">Remove Task</button>
+      </div>
+    </div>
+
+    <!-- The TO-DO-LIST Modal -->
+    <div id="toDoListModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeToDoListModal">&times;</span>
+        <p>Task Name:</p>
+        <input type="text" id="toDoTaskName" />
+        <p>Task Duration:</p>
+        <input type="text" id="toDoTaskDuration" />
+        <p>Task Deadline (Time):</p>
+        <input type="time" id="toDoTaskDeadline" />
+        <button id="submitToDoTask">Submit Task</button>
+      </div>
+    </div>
+
+    <script>
+      // Define a color palette with distinct colors
+      const colorPalette = [
+        "#8FD7D7",
+        "#00B0BE",
+        "#FF8C8A",
+        "#f45f74",
+        "#bdd373",
+        "#98c127",
+        "#ffcd8e",
+        "#ffb255",
+      ];
+      let tasks = [];
+      var taskArray = [];
+      var durationArray = [];
+      var ctx = document.getElementById("pieChart").getContext("2d");
+      var myPieChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+          labels: taskArray,
+          datasets: [
+            {
+              data: durationArray,
+              backgroundColor: colorPalette, // Use the color palette
+              hoverOffset: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false, // Allow the chart to resize based on the container size
+          plugins: {
+            datalabels: {
+              display: true, // Enable internal labels
+              color: "#ffffff", // Text color for labels inside the pie chart
+              anchor: "center",
+              align: "center",
+              formatter: function (value, context) {
+                // Return task name for internal labels
+                return context.chart.data.labels[context.dataIndex];
+              },
+            },
+            labels: {
+              render: function (args) {
+                var percentage = args.percentage.toFixed(2) + "%"; // Format percentage
+                var value = args.value; // Get duration in minutes
+                var hours = Math.floor(value / 60);
+                var minutes = value % 60;
+                var timeFormatted =
+                  hours > 0
+                    ? `${hours}:${minutes.toString().padStart(2, "0")}`
+                    : `0:${minutes.toString().padStart(2, "0")}`;
+                return `${percentage} (${timeFormatted})`; // Combine percentage and formatted time
+              },
+              fontColor: "#000000", // Color of the outside labels
+              precision: 2, // Decimal precision
+              outsidePadding: 20, // Increase the space between label and chart
+              textMargin: 12, // Increase space between label and line
+              position: "outside", // Position the label outside the pie chart
+            },
+          },
+          layout: {
+            padding: {
+              left: 100, // Add padding to ensure labels are not cut off
+              right: 100,
+              top: 20,
+              bottom: 20,
+            },
+          },
+          onClick: function (evt, element) {
+            if (element.length > 0) {
+              const index = element[0].index;
+              alert("You clicked on " + taskArray[index]);
+            }
+          },
+        },
+        plugins: [ChartDataLabels], // Add this line to include the data labels plugin
+      });
+
+      function updateChart() {
+        myPieChart.data.labels = taskArray;
+        myPieChart.data.datasets[0].data = durationArray;
+        // Use the color palette and cycle through it
+        myPieChart.data.datasets[0].backgroundColor = taskArray.map(
+          (_, index) => colorPalette[index % colorPalette.length]
+        );
+        myPieChart.update();
+      }
+
+      function openModal(modalId) {
+        document.getElementById(modalId).style.display = "block";
+      }
+
+      function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+      }
+
+      document.getElementById("openAddTaskModal").onclick = function () {
+        openModal("addTaskModal");
+      };
+
+      document.getElementById("openEditTaskModal").onclick = function () {
+        openModal("editTaskModal");
+        // Populate edit select options
+        const editSelect = document.getElementById("edittaskName");
+        editSelect.innerHTML = "";
+        taskArray.forEach((task) => {
+          const option = document.createElement("option");
+          option.value = task;
+          option.textContent = task;
+          editSelect.appendChild(option);
+        });
+      };
+
+      document.getElementById("openRemoveTaskModal").onclick = function () {
+        openModal("removeTaskModal");
+        // Populate remove select options
+        const removeSelect = document.getElementById("removetaskName");
+        removeSelect.innerHTML = "";
+        taskArray.forEach((task) => {
+          const option = document.createElement("option");
+          option.value = task;
+          option.textContent = task;
+          removeSelect.appendChild(option);
+        });
+      };
+
+      document.getElementById("closeAddTaskModal").onclick = function () {
+        closeModal("addTaskModal");
+      };
+
+      document.getElementById("closeEditTaskModal").onclick = function () {
+        closeModal("editTaskModal");
+      };
+
+      document.getElementById("closeRemoveTaskModal").onclick = function () {
+        closeModal("removeTaskModal");
+      };
+
+      document.getElementById("addTask").onclick = function () {
+        const name = document.getElementById("taskName").value;
+        const hour = parseInt(document.getElementById("hour").value) || 0;
+        const minutes = parseInt(document.getElementById("minutes").value) || 0;
+        const duration = hour * 60 + minutes;
+        if (name && duration > 0) {
+          taskArray.push(name);
+          durationArray.push(duration);
+          updateChart();
+          closeModal("addTaskModal");
+        }
+      };
+
+      document.getElementById("editTask").onclick = function () {
+        const name = document.getElementById("edittaskName").value;
+        const hour = parseInt(document.getElementById("editHour").value) || 0;
+        const minutes =
+          parseInt(document.getElementById("editMinutes").value) || 0;
+        const duration = hour * 60 + minutes;
+        if (name && duration > 0) {
+          const index = taskArray.indexOf(name);
+          if (index > -1) {
+            durationArray[index] = duration;
+            updateChart();
+            closeModal("editTaskModal");
+          }
+        }
+      };
+
+      document.getElementById("removeTask").onclick = function () {
+        const name = document.getElementById("removetaskName").value;
+        const index = taskArray.indexOf(name);
+        if (index > -1) {
+          taskArray.splice(index, 1);
+          durationArray.splice(index, 1);
+          updateChart();
+          closeModal("removeTaskModal");
+        }
+      };
+      // Open the TO-DO-LIST Modal when the link is clicked
+      document.querySelector(".new-link:nth-child(3)").onclick = function () {
+        openModal("toDoListModal");
+      };
+
+      // Close the TO-DO-LIST Modal when the 'X' is clicked
+      document.getElementById("closeToDoListModal").onclick = function () {
+        closeModal("toDoListModal");
+      };
+
+      // Function to display tasks on the webpage
+      function displayTasks() {
+        const taskListContainer = document.getElementById("taskListContainer");
+        const taskList = document.getElementById("taskList");
+
+        if (tasks.length === 0) {
+          taskListContainer.style.display = "none"; // Hide the task list container if there are no tasks
+          return;
+        }
+
+        taskListContainer.style.display = "block"; // Show the task list container if there are tasks
+        taskList.innerHTML = ""; // Clear existing tasks
+
+        tasks.forEach((task) => {
+          const li = document.createElement("li");
+          li.className = "task-item";
+
+          const circle = document.createElement("div");
+          circle.className = "task-circle";
+          circle.addEventListener("click", () => {
+            circle.classList.toggle("checked");
+          });
+
+          const name = document.createElement("span");
+          name.className = "task-name";
+          name.textContent = `Task Name: ${task.name}, Duration: ${task.duration} minutes, Deadline: ${task.deadline}`;
+
+          li.appendChild(circle);
+          li.appendChild(name);
+          taskList.appendChild(li);
+        });
+      }
+      // Call this function whenever tasks are updated
+      function updateTaskList() {
+        displayTasks();
+      }
+
+      document.getElementById("submitToDoTask").onclick = function () {
+        const taskName = document.getElementById("toDoTaskName").value;
+        const taskDuration = document.getElementById("toDoTaskDuration").value;
+        const taskDeadline = document.getElementById("toDoTaskDeadline").value;
+
+        const newTask = {
+          name: taskName,
+          duration: parseInt(taskDuration),
+          deadline: taskDeadline,
+        };
+
+        tasks.push(newTask);
+        console.log("Tasks Array:", tasks);
+
+        updateTaskList();
+
+        closeModal("toDoListModal");
+      };
+    </script>
+  </body>
+</html>
